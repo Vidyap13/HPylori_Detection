@@ -1,0 +1,17 @@
+Data processing happened by creating small images and processed in bits.
+Reference images was of size 512*512, 256*256. Could be according to the need.
+Segmentation was done by noticing just the prominent regions.
+Check if the Demo videos are present 
+Public Dataset was used for the segmentation process
+Tool to open the WSI - Aperio Image Scope (high resolution available no problem faced)
+Images were converted to PNG as output 
+Prominent region are the glands outer regions in the slide as well as segmented images consisted them.
+Data Augmentation can be minimized to 2 techniques. They used (GaussianBlur,ISO Noise, HSV Adjustment,geometric transformation ) 
+Improvisation: 
+	Sliding window could be made faster
+	Segmentation could be faster
+	Try checking other models instead YOLO
+	For output instead id try replacing the ones that were picked from the slide
+Difficulty: 
+  Joining back each segments to original slide, was handled by giving each segmented image an ordered id.
+  Negating the white areas and adding them back during output (confirmed that no bacteria exists)

@@ -1,0 +1,224 @@
+# Training Data Balance: The Negative Sample Problem
+
+## The Standard Approach (That Didn't Work)
+
+Most object detection tutorials recommend balanced training:
+```
+Positive samples : Negative samples = 1 : 1
+```
+
+We started with:
+- **1,153 positive patches** (verified bacteria present)
+- **1,153 negative patches** (random samples from good slides)
+
+**Initial training results**:
+```
+Epoch 50:
+  mAP@0.5:  1.8%  ❌
+  Precision: 12.3%
+  Recall:    3.1%
+```
+
+The model learned almost nothing. But why?
+
+## The Hidden Label Noise Problem
+
+### What "Negative" Really Meant
+
+Our negative patches came from slides that were not marked as "H. pylori positive" by pathologists. But here's the catch:
+
+> Pathologists miss annotations. A lot.
+
+**Why pathologists miss bacteria**:
+1. **Bacteria are tiny**: 5-10 pixels in a 512×512 patch
+2. **Confirmation bias**: Once a slide is marked positive, less scrutiny on "clear" regions
+
+
+**Impact on training**:
+```
+Positive patch: "This is bacteria" ✅
+Negative patch with missed bacteria: "This is NOT bacteria" ❌
+```
+
+The model receives **contradictory signals** for the same visual patterns.
+
+## Rethinking the Training Strategy
+
+### Hypothesis
+
+If negative patches are contaminated, what if we:
+1. Train primarily on **clean positives**
+2. Use minimal, **high-confidence negatives**
+3. Let the model learn "what bacteria looks like" instead of "what non-bacteria looks like"
+
+### Mathematical Intuition
+
+Traditional loss function with balanced data:
+```
+L = L_positive + L_negative
+```
+
+With contaminated negatives:
+```
+L = L_positive + L_negative_clean + L_negative_contaminated
+                                    ↑
+                                 Adds noise
+```
+
+Reducing negatives:
+```
+L ≈ L_positive + 0.3 × L_negative_verified
+```
+
+The model focuses on **learning the positive class** with minimal interference.
+
+## Implementation: The 70-30 Split
+
+### Training Configuration
+
+```python
+# Dataset composition
+positive_patches = 1153
+negative_patches = 346  # 30% of positives
+
+# Why 30%?
+# - Enough to prevent false positives
+# - Small enough to minimize label noise
+```
+
+### Negative Sample Selection
+
+Instead of random sampling, we used random patches from **verified slide's negatives**:
+
+
+### Training Results Comparison
+
+| Ratio (Pos:Neg) | mAP@0.5 | Precision | Recall | Notes |
+|-----------------|---------|-----------|--------|-------|
+| 70:30 | **46.9%** | 0.77 | 0.16 | Best balance |
+| 50:50 | 23.1% | 0.45 | 0.12 | Label noise |
+| 50:100 | 1.8% | 0.12 | 0.03 | Severe noise |
+
+**Winner**: 70% positive, 30% verified negative
+
+## Deep Dive: Why 70-30 Works
+
+### 1. Positive Dominance
+The model's primary learning objective becomes:
+```
+"Learn to recognize H. pylori bacteria features"
+```
+
+Not:
+```
+"Learn to distinguish bacteria from non-bacteria"
+```
+
+This is subtle but critical. Medical object detection is about **finding rare objects**, not binary classification.
+
+### 2. False Positive Control
+The 30% negatives aren't useless — they:
+- Prevent the model from marking everything as positive
+- Teach background rejection
+- Calibrate confidence scores
+
+But they're **secondary** to learning the positive class.
+
+### 3. Active Learning Synergy
+
+The 70-30 split works especially well with active learning:
+
+```
+Iteration 0:
+  Train on 1153 pos + 346 neg → mAP 35%
+
+Iteration 1:
+  Run inference on unannotated patches
+  Pathologist verifies high-confidence detections
+  Add 200 new verified positives
+  
+  Train on 1353 pos + 346 neg → mAP 42%
+
+Iteration 2:
+  Add more verified positives and negatives
+  
+```
+
+The positive count grows with quality data; also negatives gets definite negative patches.
+
+## Practical Implementation
+
+
+### Training Script
+```python
+from ultralytics import YOLO
+
+# Load samples
+pos_images = glob('data/positive/images/*.png')
+neg_images = glob('data/negative_verified/images/*.png')
+
+# Create dataset YAML
+config = {
+    'path': 'data/',
+    'train': 'train/images',
+    'val': 'val/images',
+    'nc': 1,
+    'names': ['H_pylori']
+}
+
+# Split with stratification
+train_pos, val_pos = train_test_split(pos_images, test_size=0.1)
+train_neg, val_neg = train_test_split(neg_images, test_size=0.1)
+
+# Organize (90% train, 10% val)
+organize_dataset(train_pos, train_neg, val_pos, val_neg)
+
+# Train
+model = YOLO('yolov8m.pt')
+results = model.train(
+    data='config.yaml',
+    epochs=130,
+    patience=40,
+    batch=16,
+    imgsz=640,
+    project='training_results'
+)
+```
+
+## Experimental Results
+
+### Validation Performance (Final Model)
+
+```
+mAP@0.5:     46.9%
+mAP@0.5-0.95: 15.6%
+Precision:    77.4%
+Recall:       16.3%
+```
+
+### Interpretation
+
+**High Precision, Low Recall**:
+- Model is conservative (good for medical use)
+- When it detects bacteria, it's usually correct (77% precision)
+- But it misses many bacteria (16% recall)
+
+**Why low recall is acceptable**:
+1. False negatives can be caught in secondary review
+2. False positives waste more clinical time
+3. Model is still learning (only 1,153 training samples)
+4. Active learning will improve recall over time
+
+## Lessons Learned
+
+### What Worked
+✅ 70-30 positive-negative ratio dramatically improved performance  
+✅ Using verified negatives reduced label noise  
+✅ Focusing on positive class learning aligned with task goals  
+
+### Key Insight
+> In medical imaging with rare objects and imperfect annotations, it's better to train on fewer, cleaner samples than more, noisier ones.
+
+---
+
+**Bottom Line**: The "balanced dataset" rule of thumb breaks down when one class is contaminated with label noise. For H. pylori detection, training on 70% positives and 30% verified negatives achieved 2.5× better mAP than the standard 50-50 split.

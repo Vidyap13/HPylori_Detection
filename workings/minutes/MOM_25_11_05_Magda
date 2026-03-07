@@ -1,0 +1,11 @@
+Redo project plan which includes the bigger chunk of the tasks and in a very clear manner
+Distinct Why, what and how in bigger project plan as well
+Add responsibility person for the tasks 
+Be specific of the tasks mentioned in the phases 
+How is looping going to be performed with Phillip? 
+Check and compare methods of yolo and r-cnn for object detetction
+Check validation parts involved in the model in each step
+Try the model without implementation of focal loss first 
+Poster : Include more figures
+Include Data flow diagram
+Make sure versioning of the code is maintained - Weights & Biases / Optuna

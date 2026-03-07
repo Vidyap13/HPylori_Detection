@@ -1,0 +1,19 @@
+# Requirements for RCNN_HPylori_Training_FIXED.ipynb
+# NOTE: Install the correct torch + torchvision wheel for your CUDA version (or CPU) first.
+#       See https://pytorch.org/get-started/locally/ and choose the command for your system.
+# Example (CPU-only) to install PyTorch before installing the rest:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+
+# The rest of the Python dependencies used by the notebook:
+numpy>=1.21
+Pillow>=8.0
+opencv-python>=4.5
+scikit-learn>=0.24
+matplotlib>=3.3
+seaborn>=0.11
+tqdm>=4.50
+tensorboard>=2.4
+
+# Optional/Helpful (not required by the notebook but commonly useful)
+# ipython
+# jupyterlab

@@ -1,0 +1,8 @@
+Receied 20 image slides along with XML and JSON (provided by Phillip) for bounding box.
+Imagescope tool, pyslide for MAC.
+Suggestion: Not to proceed with Classification.
+Patch of pixel 250*250 is better , was used by researchers before.
+Problem faced was imbalance in the positives and negatives of identification.
+Data Augmentation was not very helpful.
+Focus loss helped worked like tweeking the features to provide more focus on positive patches and less of negative patches.
+Final classification model was just yes or no, leading to higher false positives.

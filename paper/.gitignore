@@ -1,0 +1,23 @@
+# LaTeX intermediate and output files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.out
+*.toc
+*.bbl
+*.blg
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+*.xdv
+*.pdf
+
+# VS Code settings (keep if you want shared config)
+!.vscode/
+
+# macOS system files
+.DS_Store

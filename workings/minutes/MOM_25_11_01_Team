@@ -1,0 +1,7 @@
+Machines are being set up for GPU access, considered using Jupyter Notebook instead google collab(ditched collab due to its slow responsiveness).
+Complete setup, upload datasets, ensure all can access and use the system.
+Each member to work on their learning tasks assigned and update progress.
+Need to finalize and justify the model/algorithm selection for white space removal.
+Use YOLO for baseline annotation; consider active learning.
+Try to Build and use a baseline YOLO model for annotation.
+Get started on the draft of poster.

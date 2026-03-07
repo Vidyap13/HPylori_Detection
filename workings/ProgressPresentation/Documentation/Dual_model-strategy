@@ -1,0 +1,116 @@
+# Dual Model Strategy: From Theory to Practice
+
+## Initial Hypothesis
+
+When we started, the plan was straightforward: use **YOLOv8** for rapid screening and **R-CNN** for precise verification. The reasoning seemed solid:
+
+- **YOLO**: Fast inference, good at catching positive cases
+- **R-CNN**: Slower but more accurate, perfect for double-checking
+
+The workflow looked like this:
+```
+Patch → YOLO (fast scan) → If positive → R-CNN (verification) → Final decision
+```
+
+## The Reality Check
+
+Here's what we discovered during implementation:
+
+### The Data Pipeline Problem
+
+Both models were being fed **identical data** — the hotspot regions extracted by our QuPath script. This created a fundamental issue:
+
+> If both models see the same patches, and R-CNN is always more accurate, why use YOLO at all?
+
+The speed advantage of YOLO became meaningless because:
+1. R-CNN's inference time (a few seconds per patch) wasn't actually a bottleneck
+2. Pathologists need accuracy over speed for clinical decisions
+3. Training two models on the same data duplicated effort without added value
+
+### Accuracy vs Speed Trade-off
+
+**Key insight**: In medical imaging, missing a tiny H. pylori bacterium (sometimes just 5-10 pixels) is far worse than taking an extra second per patch.
+
+R-CNN's architecture is specifically designed for small object detection:
+- Better feature extraction at multiple scales
+- More refined region proposals
+- Superior handling of class imbalance
+
+YOLO, while fast, struggled with:
+- Tiny bacteria (5-10 pixel objects)
+- High precision requirements for medical use
+- False negatives on edge cases
+
+## The Revised Strategy
+
+We pivoted to a **single-model, iterative approach**:
+
+### YOLO's New Role: Active Learning
+
+Instead of parallel deployment, YOLO became our **learning engine**:
+
+```
+Training Cycle:
+1. Train YOLO on verified positive patches
+2. Run inference on unannotated patches
+3. Pathologist reviews high-confidence detections
+4. Verified detections → added to training set
+5. Repeat until convergence
+```
+
+**Why this works**:
+- YOLO is fast enough to scan thousands of unannotated patches
+- Pathologists only review likely positives (high confidence)
+- Dataset grows iteratively with quality-controlled annotations
+- ~500 initial patches expanded to ~1000+ verified positives
+
+### R-CNN as Production Model
+
+R-CNN became the **final deployment model** because:
+
+1. **Trained on clean, verified data** from the active learning loop
+2. **No time pressure** during clinical use (seconds per slide is acceptable)
+3. **Minimal false negatives** — critical for patient outcomes
+4. **Handles tiny objects** that YOLO might miss
+
+## Technical Implementation
+
+### YOLO Training Configuration
+```python
+Model: YOLOv8m
+Training patches: 1,153 positive + 346 negative (30% ratio)
+Epochs: 130
+Learning rate: 0.001
+Augmentation: Conservative (HSV, geometric transforms)
+Confidence threshold: 0.10 (for active learning inference)
+```
+
+### R-CNN Configuration
+```python
+Model: Faster R-CNN with ResNet backbone
+Training data: Verified patches from active learning
+Epochs: Variable (until validation plateau)
+Confidence threshold: 0.25 (for production)
+Focus: High recall, acceptable precision
+```
+
+## Lessons Learned
+
+### What Worked
+✅ Active learning with YOLO significantly expanded our dataset  
+✅ R-CNN's accuracy justified the minimal speed trade-off  
+✅ Separating "training assistant" from "production model" clarified objectives  
+
+### What Didn't Work
+❌ Running both models in parallel on same data  
+❌ Prioritizing speed over accuracy in medical context  
+❌ Training two models simultaneously on limited data  
+
+**When Dual Models Make Sense**:
+- If data sources differ (e.g., YOLO on low-res, R-CNN on high-res)
+- If deployment contexts differ (edge devices vs cloud)
+- If task objectives differ (screening vs diagnosis)
+
+---
+
+**Bottom Line**: The best architecture isn't always the most complex. For H. pylori detection, a well-trained R-CNN on quality data outperformed a dual-model system trained on the same limited dataset.

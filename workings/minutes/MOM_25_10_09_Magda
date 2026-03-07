@@ -1,0 +1,13 @@
+09.10.2025
+Project Proposal and Timeline to be given
+Contact person for the Labokiln- Phillip (make sure to have a backup person if phillip gets occupied)
+Check other methods rather than YOLO for object detetction - plus point --> one occurence of the bacteria is all that we need, not locating every single presence of the bacteria in the WSI.
+If a region which typically contains the bacteria is found, go ahead and research more intensively, with a better detection model or go step by step through the section without skipping.
+The output: Locating a single bacteria with the box around it.
+Drop the Yolo Approach, come up with something more logical and smart instead of using an already built model and making it go through the image completely. Which is a brute force method and needs a lot of computation and time.
+Annotations are incomplete(Most of the bacteria present in the WSI is not annotated as the slide was considered complete after finding 1 instance)
+How to treat wrong annotations? Come up with an idea.
+A hierarchical approach, where maybe a simpler NN deals with the whole image in the beginning and for highly likely regions a better NN model and further try the most accurate and high level one for the presice and small highly regions(And for the true negative cases).
+Reuse existnig dataset + Openly available(is it worth cleaning and training the model on a seperate dataset? And testing on the given dataset?)
+Augment and convert the openly available IHC stained data to look similar to Laboklin or vice-e-versa.(Possible? If no, then no point in training the model)
+Next meeting: 21/10/25 11:00-12:00

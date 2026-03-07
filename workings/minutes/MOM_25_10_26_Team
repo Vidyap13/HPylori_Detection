@@ -1,0 +1,5 @@
+Trying to find the best of each method 1. Classification by sub patches 
+                                       2. YOLO object detection
+Deciding on the pipeline 
+  Otsu--> Sliding window(Might add nuclick still in discussion)--> YOLO/Classification--> NMS(to avoid overlap)--> original picture coordinates for final output 
+Prepare proposal on the currently decided methods

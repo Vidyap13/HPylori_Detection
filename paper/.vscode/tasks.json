@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build LaTeX (latexmk)",
+      "type": "shell",
+      "command": "eval \"$(/usr/libexec/path_helper)\" && latexmk -pdf -interaction=nonstopmode -synctex=1 HPylori_Draft.tex",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build LaTeX (pdflatex)",
+      "type": "shell",
+      "command": "eval \"$(/usr/libexec/path_helper)\" && pdflatex -interaction=nonstopmode -synctex=1 HPylori_Draft.tex",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean LaTeX Auxiliary Files",
+      "type": "shell",
+      "command": "eval \"$(/usr/libexec/path_helper)\" && latexmk -c HPylori_Draft.tex",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+Data preparation: Understand the working of the Qupath.. detailed explanantion on how exactly the tool is working, why is it working, measures to improve if possible.
+Visualisation of high risk region and low risk region(Stroma).
+How are we making sure the model works? Create a test set even for annotation.
+Manual effort still involved in prep of the images.
+Add thumbnail into the pipeline of methodology.
+Keen validation on Qupath algorithm.
+To try out "Segment Anything" a tool that can help us segment and validate.
+Try to develop 2 model, precision and speed .
+    a. Quicker one (YOLO)
+    b. Stronger model (R-CNN)
+Masking for YOLO make the unecessary backgrouund into white.
+Try QuPath for bacteria detection not just segmentation.
+
+Poster:
+In key challenges 3rd point can be chnaged to "Not spotted" instead missing annotations.
+In What makes you special? can remove QuPath since it's a tool, keep the active learning and hierarchical pipeline.
+Do not use shortcuts, WSI- Whole slide Image.
+Make it a functional Diagram instead of all the tools used as well, add technical staff.
+References--> try to know what is out of the literature review.

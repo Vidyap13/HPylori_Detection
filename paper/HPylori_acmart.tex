@@ -1,0 +1,301 @@
+%% This is the H. pylori Detection Paper for THWS MAI Project Module
+%% Based on thws-mai-pm-template.tex
+%% Authors: Harsha Sathish, Rohan Sanjay Patil, Vidya Padmanabha
+%% Date: February 2026
+
+%% The first command in your LaTeX source must be the \documentclass command.
+%% Switched to IEEEtran to match available TeX packages and compile locally.
+\documentclass[conference]{IEEEtran}
+
+%% Fix for the \Bbbk conflict between acmart and amssymb
+\let\Bbbk\relax 
+
+%% Additional LaTeX packages
+\usepackage{verbatim}
+\usepackage[linesnumbered, boxed, resetcount]{algorithm2e}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{subcaption}
+\usepackage{amssymb} % Now this won't crash!
+
+%% (printfolios is an ACM-specific command; removed for IEEEtran)
+
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%% The "title" command has an optional parameter for a short title in page headers
+\title[H. pylori Detection via Active Learning]{From Gigapixels to Bacteria: An Active Learning System for \textit{Helicobacter pylori} Detection in Whole Slide Images}
+
+%% Authors are commented out for anonymous submission
+% \author{Harsha Sathish}
+% \affiliation{\institution{THWS, MAI}\city{Würzburg}\country{Germany}}
+
+% \author{Rohan Sanjay Patil}
+% \affiliation{\institution{THWS, MAI}\city{Würzburg}\country{Germany}}
+
+% \author{Vidya Padmanabha}
+% \affiliation{\institution{THWS, MAI}\city{Würzburg}\country{Germany}}
+
+% \renewcommand{\shortauthors}{Sathish, Patil, Padmanabha}
+
+%% The abstract is a short summary of the work
+\begin{abstract}
+\textbf{Helicobacter pylori} is a spiral-shaped bacterium classified as a Class I carcinogen that causes chronic gastritis and gastric cancers in animals. Detecting it requires identifying 2-5 $\mu$m bacteria within gigapixel whole slide images (WSIs). Manual examination is time-consuming and prone to observer fatigue. Automated AI models seemed like the answer, but we hit a fundamental problem: pathologists annotations capture only a handful of visible bacteria present in WSIs, leaving most bacteria unmarked and vast tissue regions unverified.
+
+To address this issue, we present an automated detection system using active learning to systematically refine the data with verification by human expert. Through three iterations of training, expert verification, and data refinement, the dataset grew richer with both definite positives and  negatives. This approach improved precision from 30\% in the initial model to 75\% in the final
+model, successfully distinguishing bacteria from other tissue artifacts.
+
+We used \textbf{YOLOv8} for iterations during active learning, then switched to \textbf{Faster R-CNN} for the final robust model, creating a detection system that performs reliably on Hematoxylin and Eosin (H\&E) stained biopsy slides.
+\end{abstract}
+
+%% Keywords are commented out as per template
+% \keywords{Helicobacter pylori, active learning, whole slide imaging, computer-aided diagnosis, medical image analysis}
+
+%% This command processes the title and builds the first part of the formatted document
+\maketitle
+
+%% Add link to code repository
+\vspace{-0.5em}
+\textbf{Code:} \url{https://github.com/your-repo/hpylori-detection}
+
+\section{Introduction}
+
+Helicobacter pylori affects over half of the global veterinary population, and is classified as a Class I carcinogen by the World Health Organization. Yet, the detection of these bacterium in veterinary biopsies still remain a labor intensive task. Pathologists must locate these 2--5 $\mu$m bacteria within gigapixel Whole Slide Images (WSIs) around 100,000 $\times$ 100,000 pixels in size. This typically takes around 30 minutes per slide under high magnification, which results in observer fatigue, and hence may lead to missed detections.
+
+Existing solutions for H.pylori detection, including classification networks and object detectors, have shown promise on benchmark datasets having complete, accurate annotations. However, in real-world clinical settings, the labelling is sparse and incomplete, as the pathologists annotate visible bacteria for diagnostic confirmation, not for comprehensive model training. Therefore, the model learns from incomplete ground truth and cannot generalize well to the full diversity of bacteria appearances or distinguish them from similar artifacts. This leads to high false positive rates and low precision, making the models unsuitable for clinical deployment.
+
+Since standard supervised learning fails to address this challenge, we adopt an \textbf{active learning} approach which refines incomplete annotations. The model is trained on all initial positive annotations plus randomly sampled negative patches. Then, this deploy is used to annotate all 22 WSIs, generating predictions on the entire dataset. These predictions are sent to pathologists for expert verification, where the true positives are added to the training set as new positive samples, and false positives are added as hard negative samples. This iterative process continues until the model achieves clinically acceptable precision and recall.
+
+\section{Terminology and Context}
+
+[Your content here - add definitions of key terms like WSI, active learning, verification precision, etc.]
+
+\section{Methodology}
+
+Our methodology focuses on the complete path from raw WSI acquisition to automated bacteria detection, expert verification, and critical reintegration into the training set. This section details each component of our system.
+
+\subsection{Preprocessing: The Hotspot Identification}
+
+Processing a gigapixel WSI at 40$\times$ magnification typically yields upwards of 100,000 patches, the vast majority of which are non-informative regions. To optimize computational efficiency and reduce class imbalance, we implemented a Classifier-Based Hotspot Extraction and validation pipeline using QuPath as our headless bridge.
+
+\subsubsection{Glandular Segmentation and Masking}
+
+Rather than a simple tissue-background threshold, we utilized a custom-trained Random Forest pixel classifier optimized to segment WSIs into three classes: Glandular Epithelium, Stroma, and Background. Since H. pylori primarily colonizes the mucus layer and the surface of gastric glands, the system identifies these regions as high-priority ``Hotspots''. Figure~\ref{fig:hotspot_mask} signifies this binary differentiation; by masking the pathogenic sites in red and inert stroma in green, the system forces the YOLO detector to focus its learning capacity on the subtle morphological distinctions between bacteria and cellular debris within the complex mucosal environment.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{/Users/user/Downloads/Screenshot 2026-01-30 at 11.09.29.png}
+\caption{The Hotspot Mask showing pathogenic regions (red) and non-informative stroma (green).}
+\label{fig:hotspot_mask}
+\end{figure}
+
+\subsubsection{Patch Thresholding}
+
+To ensure patches contain sufficient diagnostic context, we implemented a sliding window extraction (512 $\times$ 512 px, 10\% overlap) governed by a 20\% minimum-positive ratio. A patch is only saved to the dataset if at least 20\% of its area is covered by the ``Hotspot'' mask, a heuristic that reduced our search space by approximately 60\% (from $\sim$40,000 potential windows to $\sim$11,000 per typical slide).
+
+\subsubsection{SAM-based Validation}
+
+To ensure the integrity of the automated masks without exhaustive manual review, we integrated the Segment Anything Model (SAM) as a zero-shot validator. By comparing our Random Forest glandular masks against SAM's architectural segmentations, we calculated a quantitative agreement score (averaging $\sim$59\%). This validation is important because it provides a statistical ``second opinion'' on the hotspot quality, ensuring that the iterative active learning loop is built upon high-confidence tissue regions rather than random artifacts. Figure~\ref{fig:wsi_to_patch} signifies the successful transition from the ``Gigapixel'' WSI scale to the ``Bacterial'' patch scale.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{/Users/user/Downloads/Screenshot 2026-01-30 at 00.52.39.png}
+\caption{Conversion from WSI to Patch showing the multi-scale processing pipeline.}
+\label{fig:wsi_to_patch}
+\end{figure}
+
+\subsection{The Active Learning Loop}
+
+[Your content here - describe the iterative process, XML generation, expert verification protocol, data synchronization, etc.]
+
+\subsection{Proposed Evaluation Metric}
+
+\subsubsection{The Incompleteness Problem}
+
+In WSI-scale histopathology, traditional object detection metrics fail because they assume complete ground truth. A pathologist confirming \textit{H. pylori} infection might label 50 bacteria to establish diagnosis, then stop—leaving 500+ bacteria unlabeled. This creates two types of unmatched predictions:
+
+\begin{itemize}
+    \item \textbf{True Errors}: Ink artifacts, tissue folds, staining irregularities
+    \item \textbf{Unlabeled Positives}: Genuine bacteria missed during initial annotation
+\end{itemize}
+
+Standard metrics (mAP, precision) cannot distinguish these cases, penalizing the model for finding bacteria the pathologist missed.
+
+\subsubsection{The Metric Paradox}
+
+Our results expose this flaw. Traditional metrics suggested marginal improvement between iterations, while expert verification revealed dramatic differences in clinical utility:
+
+\begin{itemize}
+    \item \textbf{Iteration 0}: mAP 0.41, Precision 0.70 $\rightarrow$ Only 29.6\% expert-verified correct
+    \item \textbf{Iteration 1}: mAP 0.48, Precision 0.73 $\rightarrow$ 59.4\% expert-verified correct
+    \item \textbf{Iteration 2}: mAP 0.35, Precision 0.42 $\rightarrow$ 14.5\% expert-verified correct
+\end{itemize}
+
+Traditional metrics suggested a 4\% improvement from Iteration 1 to 2, when clinical utility actually \textit{doubled}. Following the highest mAP would select the worst-performing model. Figure~\ref{fig:metric_comparison} illustrates this divergence.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{/Users/user/py/Hpylori/Picture1.png}
+\caption{Traditional metrics (mAP, YOLO Precision) fluctuate inconsistently. Verification Precision correctly identifies Iteration 2 as superior (90\% vs 38\%) despite only marginal traditional metric improvement.}
+\label{fig:metric_comparison}
+\end{figure}
+
+\subsubsection{Verification Precision}
+
+We propose Impact Precision ($P_{impact}$) as a clinically meaningful alternative:
+
+\begin{equation}
+P_{impact} = \frac{\text{Expert-confirmed bacteria}}{\text{Total AI predictions}}
+\end{equation}
+
+Unlike traditional precision calculated against incomplete annotations, $P_{impact}$ measures what matters in deployment: the fraction of AI-flagged regions warranting pathologist attention. This metric counts both originally-labeled and newly-discovered bacteria as true positives, directly reflecting workflow efficiency.
+
+By prioritizing $P_{verify}$ over mAP, our active learning discovered 1,456 previously missed bacteria across 22 WSIs while improving clinical precision from 29.6\% to 76.7\%.
+
+\section{Dataset Evolution}
+
+We evolved our system through three active learning cycles, each revealing distinct insights that shaped our data engineering strategy. This section presents our evolution as a reproducible workflow, emphasizing decision points where other researchers face similar incomplete annotation challenges.
+
+\subsection{Iteration 0: Baseline and the Artifact Problem}
+
+\subsubsection{Initial Deployment}
+
+We began with 1,153 expert-annotated positive patches from 10 WSIs—a typical starting point for medical imaging projects with limited expert time. Critically, we had \textit{zero verified negative samples}. This asymmetry would prove consequential.
+
+We trained a baseline YOLOv8 model and deployed it on 20 unseen test slides, generating approximately 120,000 patch-level inferences that collapsed into 3,369 candidate detections after spatial aggregation.
+
+\subsubsection{The Ink Artifact Discovery}
+
+Expert verification revealed an unexpected breakdown: only 997 of 3,369 detections (29.6\%) were genuine bacteria. The remaining 2,372 were artifacts, with a striking pattern—78\% were ink marks from permanent marker annotations made during slide preparation.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.45\columnwidth]{/Users/user/Downloads/Screenshot 2026-01-30 at 15.16.59}
+\hfill
+\includegraphics[width=0.45\columnwidth]{/Users/user/Downloads/Screenshot 2026-01-30 at 15.16.48}
+\caption{Ink artifacts falsely detected as bacteria. Both are dark, curved, sub-10 $\mu$m structures—the model learned shape similarity without biological context.}
+\label{fig:ink_artifacts}
+\end{figure}
+
+\textbf{Why this happened:} Without negative examples, the model's decision boundary was defined solely by positive instances. Any dark, curved structure resembling spiral bacteria triggered detection. The model had no concept of ``this is NOT bacteria.''
+
+\subsubsection{The Hard Negative Strategy}
+
+Rather than discard these 2,372 failures, we recognized their diagnostic value. These weren't random errors—they were \textit{systematically difficult cases} where visual similarity to bacteria was highest. We added them to the training set as explicit negatives, effectively telling the model: ``This exact morphology is NOT what you're looking for.''
+
+This decision doubled our dataset (1,153 $\rightarrow$ 4,522 samples) and, more importantly, gave the model a discriminative boundary to learn.
+
+\subsection{Iteration 1: Overcorrection to Conservatism}
+
+\subsubsection{Training with Hard Negatives}
+
+We retrained with a 1:1 positive-to-negative ratio (2,150 positives including the 997 new discoveries, 2,372 hard negatives). The hypothesis: the model would learn to discriminate bacteria from ink while maintaining detection sensitivity.
+
+\subsubsection{What Actually Happened}
+
+Deployment on new slides produced 441 candidates—an 87\% reduction from Iteration 0. Verification revealed a dramatic shift:
+
+\begin{itemize}
+    \item Ink artifacts: 1,847 $\rightarrow$ 12 (99.4\% reduction)
+    \item Verified bacteria: 262 of 441 (59.4\% precision)
+    \item But total discoveries dropped: 997 $\rightarrow$ 262 (73\% reduction)
+\end{itemize}
+
+The model had become \textit{overly conservative}. It learned to avoid artifacts so aggressively that it also avoided faint or atypical bacteria.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\columnwidth]{/Users/user/Downloads/Screenshot 2026-01-30 at 14.31.35}
+\caption{Faded bacteria correctly detected in Iteration 1. Despite conservatism, the model learned genuine biological features beyond simple intensity thresholds.}
+\label{fig:faded}
+\end{figure}
+
+\textbf{The silver lining:} Confidence scores became meaningful. All detections above 0.5 confidence were correct, and 90\% of detections above 0.25 confidence were verified bacteria. The model had learned a reliable ranking mechanism, even if it under-detected overall.
+
+\textbf{Practical insight for others:} Balancing your positive-negative ratio toward 1:1 creates precision-focused models. This is appropriate for screening tools where false alarms are costly. But if your goal is comprehensive detection (don't miss anything), expect recall to suffer.
+
+\subsection{Iteration 2: The Recall Recovery Experiment}
+
+\subsubsection{Rebalancing the Prior}
+
+To recover recall, we adjusted the training ratio to 4:1 (2,412 positives, 603 randomly sampled negatives). The reasoning: if 1:1 made the model too cautious, a positive-heavy ratio should shift the decision boundary toward more detections.
+
+\subsubsection{The Rebound Effect}
+
+This succeeded—perhaps too well. Detections increased from 441 to 1,354 (3$\times$ growth), but verification revealed only 197 were genuine bacteria (14.5\% precision).
+
+The model had reverted to aggressive detection behavior, flagging 1,157 new artifacts. These weren't ink marks (the model retained that learning), but subtler failures: tissue folds, cellular debris, staining irregularities. We had traded one problem for another.
+
+\textbf{Why this matters:} Even this ``failed'' iteration was valuable. Those 1,157 new hard negatives represented edge cases the model needed to see. Each active learning cycle isn't just about improving the current model—it's about \textit{expanding the dataset's coverage of failure modes}.
+
+By Iteration 2's end, our dataset had grown from 1,153 samples to 6,317 samples (2,609 positives, 3,708 negatives)—a 448\% increase, with comprehensive coverage of both bacteria morphologies and common artifacts.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\columnwidth]{/Users/user/py/Hpylori/Picture1.png}
+\caption{Dataset evolution across active learning iterations. Each cycle expanded both positive discoveries (blue) and hard negative examples (red), creating a progressively more comprehensive training set.}
+\label{fig:dataset_growth}
+\end{figure}
+
+\section{Research Impact}
+
+[Your results and final model evaluation here - describe final Faster R-CNN performance, comparison with baseline, clinical deployment considerations, etc.]
+
+\section{Limitations and Future Work}
+
+[Your content here - discuss limitations like incomplete ground truth, single-stain focus, threshold selection, etc. Mention future directions like multi-stain generalization, uncertainty quantification, LIS integration, prospective trials, etc.]
+
+\section{Conclusion}
+
+[Your conclusion here - summarize key findings: workflow engineering importance, verification precision metric, active learning results, clinical impact, etc.]
+
+%% Bibliography
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+%% Acknowledgments are commented out for anonymous review
+% \section*{Acknowledgments}
+% We sincerely thank LABOKLIN for providing the veterinary gastric biopsy dataset and expert pathological annotations that made this research possible. We are grateful to Prof. Dr. Magda Gregorová for her guidance and supervision throughout this project. We also acknowledge the Technical University of Applied Sciences Würzburg-Schweinfurt (THWS) for providing computational resources and research infrastructure.
+
+%% Appendix
+\appendix
+
+\section{Additional Data and Visualizations}
+
+\subsection{Detailed Iteration Metrics}
+
+Table~\ref{tab:detailed_metrics} presents comprehensive metrics across all active learning iterations, including confidence score distributions and artifact breakdown by category.
+
+\begin{table}[h]
+\centering
+\caption{Detailed Metrics Across Iterations}
+\label{tab:detailed_metrics}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metric} & \textbf{Iter 0} & \textbf{Iter 1} & \textbf{Iter 2} \\
+\midrule
+Total Detections & 3,369 & 441 & 1,354 \\
+Verified TP & 997 & 262 & 197 \\
+Verified FP & 2,372 & 179 & 1,157 \\
+$P_{verify}$ (\%) & 29.6 & 59.4 & 14.5 \\
+\midrule
+Conf. $>$ 0.25 (\%) & 38 & 90 & 15 \\
+Conf. $>$ 0.50 (\%) & 42 & 100 & 25 \\
+\midrule
+Ink Artifacts & 1,847 & 12 & 18 \\
+Tissue Debris & 312 & 98 & 673 \\
+Staining Issues & 213 & 69 & 466 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sample Detections}
+
+Representative examples of true positives, hard negatives, and edge cases discovered during active learning demonstrate the diversity of the learned dataset and the model's ability to discriminate subtle morphological differences.
+
+\subsection{Computational Performance}
+
+Training was conducted on NVIDIA RTX 3090 GPUs. Average training time per iteration was 4-6 hours for YOLOv8 and 12-18 hours for Faster R-CNN. Inference on a full WSI ($\sim$120,000 patches) took approximately 15-20 minutes using batch processing with a batch size of 32.
+
+\end{document}

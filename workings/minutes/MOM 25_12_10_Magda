@@ -1,0 +1,39 @@
+1. Documentation & Writing
+
+Technical Descriptions: Write detailed descriptions for the "Ground Truth" and explain the rationale behind the decisions made for the classifier.
+Paper Documentation: Write the algorithm description specifically for the paper.
+QuPath: Draft the pseudo-code for the QuPath implementation.
+General: Ensure the entire process is documented thoroughly.
+
+2. Data Strategy & Preparation
+
+Splitting Strategy:
+Do not split training/test data by "slides" (this causes huge disparity due to slide saturation).
+Action: Mix patches from all slides to ensure a balanced distribution.
+
+Negative Sampling:
+Training must include negative samples.
+Constraint: Do not consider stroma for negative regions.
+Action: Manually pick negative images if necessary if the distance thing is a must.
+
+Dataset Size (Target):
+Training: ~900+ samples.
+Validation: ~100+ samples.
+
+Note: Re-evaluate the validation split size (standard 30% might be a waste, dont do it just because you learnt about it in DL) check this.
+
+3. Modeling & Implementation
+
+Loss Function: Is Focal Loss necessary?
+
+Bounding Boxes: Investigate how to determine if a bounding box is "right" or "wrong" within a given patch by philipp.
+Rely on the coordinates of the bounding boxes.
+Implement logic for adding IDs.
+
+Active Learning:
+
+How to actually implement Active learning??
+
+Plan for more iterations of active learning in short time.
+Make sure the "negatives" in the active learning loop are also being verified and extended with proper negatives.
+Validation: Visualize the model/classifier output on negative images to verify performance.

@@ -1,0 +1,29 @@
+Summary of Last 2 Weeks
+Project: Detection of Gastric Pylori Bacteria
+Date: October 20, 2025
+Team Members: Rohan Sanjay Patil, Vidya Padmanabha, Harsha Sathish
+
+• Meeting with Seniors (Nayan, Zeyi)
+• Received dataset samples walkthrough and explanation of annotation methods
+• Discussed various approaches used by seniors
+• Explored possibility of training on public datasets
+• Note: Full dataset not yet received; waiting for Omer to return
+• Plan to request dataset from Philipp in the meantime
+Technical Discussions
+• Hierarchical Approach: Proposed two-stage detection system
+   Simple model for high-probability regions
+   Deeper model for low-probability regions if bacteria not found initially
+• Early Stopping Logic: Discussed stopping execution after detecting single bacteria
+occurrence to prove presence; still determining approach for proving absence
+• Image Reconstruction: Reviewed the ID-based approach; explore alternative methods
+Decisions Made
+• Approach: Classification with segmentation preprocessing
+• Segmentation: Will use NuClick-like model to identify high-probability regions
+• Preprocessing: Remove white spaces from images
+Resource Request
+• Requesting GPU system access,preferably at SHL location??
+Plan for Next 2 Weeks
+  1. Prepare for meeting with Philipp (Wednesday)
+  2. Curate and clean LABOKLIN dataset (per proposal timeline)
+  3. Begin development of segmentation model
+Next Meeting: Tuesday, November 4, 2025
