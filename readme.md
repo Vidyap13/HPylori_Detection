@@ -33,6 +33,9 @@ HPylori_Detection/
 │   ├── yolov8m.pt                       #   YOLOv8 medium weights
 │   └── yolo11n.pt                       #   YOLOv11 nano weights
 │
+├── demo/                                                        # ← Final demo presentation
+│   ├── From Gigapixels to Bacteria_Demo Presentation.pdf        #   Pdf for final presentation
+│
 ├── model_tryouts/                       # ← Experiments & training data
 │   ├── ActiveLearning_Union_Approach.ipynb
 │   ├── Project_Implementation/
