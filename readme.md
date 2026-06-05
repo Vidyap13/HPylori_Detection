@@ -1,13 +1,6 @@
 # From Gigapixels to Bacteria: *H. pylori* Detection via Active Learning
 
 > **An active learning system for automated *Helicobacter pylori* detection in veterinary whole slide images**
-
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c?logo=pytorch)](https://pytorch.org/)
-[![Ultralytics](https://img.shields.io/badge/YOLOv8-Ultralytics-00c0c0)](https://ultralytics.com/)
-[![License](https://img.shields.io/badge/License-Academic-lightgrey)](./LICENSE)
-[![Paper](https://img.shields.io/badge/Paper-ICDD%202026-green)](./paper/HPylori_ICDD2026.pdf)
-
 ---
 
 ## 📄 Abstract
