@@ -74,7 +74,7 @@ Traditional object detection assumes complete ground truth. In diagnostic histop
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   Active Learning Loop                    │
+│                   Active Learning Loop                      │
 │                                                             │
 │  1. Train YOLOv8 on annotated patches + provisional neg.    │
 │         ↓                                                   │
