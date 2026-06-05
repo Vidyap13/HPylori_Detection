@@ -50,6 +50,7 @@ HPylori_Detection/
 │   └── HPylori_ICDD2026.pdf             # Conference paper (ICDD 2026)
 │
 ├── poster/                              # Poster assets
+│   └── PyloriBacteria.pdf               #Final poster template
 │
 └── workings/                            # Meeting minutes, proposals, documentation
     ├── minutes/                         # Weekly meeting notes (MOM)
