@@ -5,11 +5,11 @@
 
 ## 📄 Abstract
 
-*Helicobacter pylori* is a spiral-shaped bacterium classified as a Class I carcinogen that causes chronic gastritis and gastric cancers in animals. Detecting it requires identifying 2–5 µm bacteria within gigapixel whole slide images (WSIs) — a task that takes approximately 30 minutes per slide and is highly prone to observer fatigue.
+*Helicobacter pylori* is a spiral-shaped bacterium classified as a Class I carcinogen that causes chronic gastritis and gastric cancers in animals. Detecting it requires identifying 2–5 µm bacteria within gigapixel whole slide images (WSIs) a task that takes approximately 30 minutes per slide and is highly prone to observer fatigue.
 
 Standard supervised approaches fail here because pathologists annotate only enough bacteria to confirm diagnosis, leaving hundreds unmarked. Standard metrics like mAP become unreliable when ground truth is incomplete.
 
-We present an **active learning pipeline** that iteratively refines detection using expert verification and hard negative mining. Over three cycles, our dataset grew from 1,153 to 6,317 samples, and **Impact Precision** — a clinically meaningful metric we propose for incomplete annotation scenarios — improved from **29.6% to 79.3%**. The final deployment model is a **Faster R-CNN** (ResNet-50 + FPN), which at a confidence threshold of 0.75 achieves 79% precision while detecting 287 of 398 verified bacteria.
+We present an **active learning pipeline** that iteratively refines detection using expert verification and hard negative mining. Over three cycles, our dataset grew from 1,153 to 6,317 samples, and **Impact Precision** — a clinically meaningful metric we propose for incomplete annotation scenarios improved from **29.6% to 79.3%**. The final deployment model is a **Faster R-CNN** (ResNet-50 + FPN), which at a confidence threshold of 0.75 achieves 79% precision while detecting 287 of 398 verified bacteria.
 
 > **Authors:** Rohan Sanjay Patil, Vidya Padmanabha, Harsha Sathish  
 > **Affiliation:** THWS — Technical University of Applied Sciences Würzburg-Schweinfurt, MAI Programme, Germany  
@@ -65,7 +65,7 @@ HPylori_Detection/
 
 ### The Core Problem
 
-Traditional object detection assumes complete ground truth. In diagnostic histopathology, this assumption breaks down. A pathologist confirming *H. pylori* infection may label 50 bacteria to establish diagnosis — then move to the next slide — leaving 500+ bacteria unlabeled. Training on this sparse data causes two failure modes:
+Traditional object detection assumes complete ground truth. In diagnostic histopathology, this assumption breaks down. A pathologist confirming *H. pylori* infection may label 50 bacteria to establish diagnosis then move to the next slide leaving 500+ bacteria unlabeled. Training on this sparse data causes two failure modes:
 
 - Models penalised for correctly detecting unlabelled bacteria (treated as false positives)
 - Models unable to distinguish bacteria from morphologically similar artifacts (ink, tissue folds, debris)
@@ -74,7 +74,7 @@ Traditional object detection assumes complete ground truth. In diagnostic histop
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   Active Learning Loop                       │
+│                   Active Learning Loop                    │
 │                                                             │
 │  1. Train YOLOv8 on annotated patches + provisional neg.    │
 │         ↓                                                   │
@@ -127,51 +127,6 @@ $$P_{impact} = \frac{\text{Expert-confirmed bacteria}}{\text{Total AI prediction
 **Total bacteria discovered through active learning: 1,456 previously unmarked instances** across 20 WSIs — suggesting initial expert annotations captured approximately 40% of actual bacteria present.
 
 ---
-
-## ⚙️ Model Configurations
-
-### YOLOv8s — Active Learning Cycles
-
-```python
-# Architecture
-model = "yolov8s"
-pretrained_weights = "COCO"
-
-# Training
-epochs = 150
-batch_size = 16
-optimizer = "AdamW"
-lr = 0.001          # Decays to 0.0001
-weight_decay = 0.0005
-
-# Augmentation (orientation + staining invariance)
-rotation     = "±180°"
-flip         = "horizontal + vertical"
-hsv_hue      = 0.015
-hsv_sat      = 0.7
-hsv_val      = 0.4
-scale        = "0.5× – 1.5×"
-
-# Inference thresholds
-conf_active_learning = 0.15   # High recall for candidate generation
-conf_deployment      = 0.25   # Balanced precision/recall
-nms_iou              = 0.45
-```
-
-### Faster R-CNN — Final Deployment Model
-
-```python
-# Architecture
-backbone    = "ResNet-50 + Feature Pyramid Network (FPN)"
-pretrained  = "ImageNet"
-
-# Anchors tuned for 2-5 µm bacteria at 40× magnification
-anchor_sizes = [4, 8, 16, 32, 64]   # pixels
-
-# Same augmentations as YOLOv8 for consistency
-# Inference
-conf_threshold = 0.75    # Clinical deployment
-```
 
 ### Hardware
 
@@ -230,24 +185,6 @@ labels/
 ```
 
 Class `0` = *H. pylori* bacterium.
-
----
-
-## 🗂️ Contents of `final_models/`
-
-| File | Type | Description |
-|---|---|---|
-| `Train_RCNN_7_02_it3.ipynb` | Notebook | **Final model.** Faster R-CNN evaluation, threshold analysis, and deployment scripts |
-| `train_yolo_it0.ipynb` | Notebook | AL Iteration 0 — Baseline YOLOv8 (29.6% precision) |
-| `train_yolo_it1.ipynb` | Notebook | AL Iteration 1 — Conservative 1:1 ratio (59.4% precision) |
-| `train_yolo_it2.ipynb` | Notebook | AL Iteration 2 — 4:1 ratio experiment (14.5% precision) |
-| `train_yolo_it3.ipynb` | Notebook | AL Iteration 3 — Optimal dataset (66.8% precision) |
-| `yolov8s.pt` | Weights | YOLOv8 small — used in AL cycles |
-| `yolov8n.pt` | Weights | YOLOv8 nano |
-| `yolov8m.pt` | Weights | YOLOv8 medium |
-| `yolo11n.pt` | Weights | YOLOv11 nano |
-
-> **Note:** The trained Faster R-CNN weights (`rcnn_bacteria_best_f1.pth`) are not included in the repository due to file size. Contact the authors for access.
 
 ---
 
@@ -314,11 +251,11 @@ If you use this code or methodology, please cite:
 
 For questions, collaboration inquiries, or access to trained model weights:
 
-| Name | Role |
-|---|---|
-| Rohan Sanjay Patil | Author, THWS MAI | rohansanjay.patil@thws.de
-| Vidya Padmanabha | Author, THWS MAI |vidya.padmanabha@thws.de
-| Harsha Sathish | Author, THWS MAI | harsha.sathish@thws.de
+| Name | Role | Email|
+|---|---|---|
+| Rohan Sanjay Patil | Author, THWS MAI | rohansanjay.patil@thws.de |
+| Vidya Padmanabha | Author, THWS MAI |vidya.padmanabha@thws.de |
+| Harsha Sathish | Author, THWS MAI | harsha.sathish@thws.de |
 
 ---
 
