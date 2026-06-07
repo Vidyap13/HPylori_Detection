@@ -234,7 +234,7 @@ Class `0` = *H. pylori* bacterium.
 If you use this code or methodology, please cite:
 
 ```bibtex
-@inproceedings{sathish2026hpylori,
+@inproceedings{patil2026hpylori,
   title     = {From Gigapixels to Bacteria: An Active Learning System for
                \textit{Helicobacter pylori} Detection in Whole Slide Images},
   author    = {Patil, Rohan Sanjay and Padmanabha, Vidya and Sathish, Harsha},
